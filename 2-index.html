@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Car Evolution | Racing Lab</title>
+<style>
+:root{color-scheme:dark;--bg:#0a1018;--card:#131d2b;--line:#28384b;--muted:#9dafc4;--blue:#65d7ff;--gold:#ffd36b}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#eff6ff;font:15px system-ui,sans-serif}header,main,footer{max-width:1440px;margin:auto;padding:20px}header{display:flex;justify-content:space-between;gap:12px;align-items:center}h1{margin:3px 0;font-size:26px;letter-spacing:-.8px}.eyebrow{font-size:11px;letter-spacing:2px;color:var(--blue);font-weight:750}.badge{padding:8px 12px;border:1px solid var(--line);border-radius:30px;font-size:12px;color:var(--muted)}main{padding-top:0;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px}.stage,.card{background:var(--card);border:1px solid var(--line);border-radius:16px}.stage{padding:12px;align-self:start;position:sticky;top:12px}canvas{display:block;width:100%}#world{aspect-ratio:1000/640;border-radius:10px;background:#0c1521}.legend{display:flex;gap:18px;font-size:12px;color:var(--muted);padding:12px 4px 4px}.dot{width:8px;height:8px;display:inline-block;border-radius:50%;margin-right:5px}.side{display:grid;gap:12px}.card{padding:16px}h2{margin:0 0 12px;font-size:12px;text-transform:uppercase;letter-spacing:1.3px;color:var(--muted)}.stats{display:grid;grid-template-columns:1fr 1fr;gap:14px}.stats small{display:block;color:var(--muted);font-size:11px}.stats strong{font-size:22px;font-variant-numeric:tabular-nums}#record{color:var(--gold)}#chart{height:90px;margin-top:12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}label{font-size:11px;color:var(--muted);display:grid;gap:6px}input,select,button{font:inherit;min-width:0;border:1px solid var(--line);border-radius:8px;background:#0c1521;color:#eff6ff;padding:10px;width:100%}input,select{font-size:15px}button{font-size:13px;cursor:pointer;min-height:42px}button:hover{border-color:var(--blue)}button.primary{background:var(--blue);color:#062234;font-weight:750}.buttons{display:flex;gap:8px;margin-top:10px}.check{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:12px}.check input{width:16px;min-height:16px}.hint{font-size:11px;color:var(--muted);line-height:1.6;margin:12px 0 0}#notice{padding:12px;border-radius:10px;color:#d2f6e4;background:#15362e;font-size:12px;display:none}footer{padding-top:0;color:var(--muted);line-height:1.65;font-size:12px}footer summary{cursor:pointer;color:#eff6ff}#clock{font-size:11px;color:var(--muted);margin-top:10px}@media(max-width:900px){main{grid-template-columns:1fr}.stage{position:static}.side{grid-template-columns:1fr 1fr}.card:last-child{grid-column:1/-1}}@media(max-width:550px){header,main,footer{padding:14px}header{align-items:start}h1{font-size:23px}.badge{font-size:10px;padding:6px 9px}main{padding-top:0}.side{grid-template-columns:1fr}.card:last-child{grid-column:auto}.stage{padding:8px}.legend{font-size:10px;gap:12px}.stats strong{font-size:23px}}
+</style></head><body>
+<header><div><div class="eyebrow">NEUROEVOLUTION / RACING LAB</div><h1>Built to learn. Born to race.</h1></div><div class="badge">Runs on your device</div></header>
+<main><section class="stage"><canvas id="world" aria-label="Live simulation of evolving cars on a closed racing circuit"></canvas><div class="legend"><span><i class="dot" style="background:#ffd36b"></i>Leader</span><span><i class="dot" style="background:#65d7ff"></i>Population</span><span>5 sensors · 74 genes</span></div></section>
+<div class="side"><div id="notice" role="status"></div><section class="card"><h2>Live telemetry</h2><div class="stats"><div><small>GENERATION</small><strong id="generation">1</strong></div><div><small>STILL RACING</small><strong id="alive">100</strong></div><div><small>BEST FITNESS</small><strong id="record">0</strong></div><div><small>FASTEST LAP</small><strong id="lap">--</strong></div></div><div id="clock"></div><canvas id="chart" aria-label="Best fitness across completed generations"></canvas><div class="hint" id="chartText">Random brains, no training yet.</div></section>
+<section class="card"><h2>Evolution settings</h2><div class="grid"><label>Cars / generation<input id="population" type="number" min="10" max="300" step="10" value="100"></label><label>Generations (0 = endless)<input id="target" type="number" min="0" max="10000" value="0"></label><label>Mutation probability (%)<input id="mutation" type="number" min="1" max="40" value="8"></label><label>Generation limit (sim s)<input id="duration" type="number" min="5" max="120" value="30"></label></div><button id="apply" style="margin-top:12px">Apply settings & restart</button><p class="hint">Settings apply together on restart. The best 3 cars survive each generation unchanged; the rest are bred with random mutations.</p></section>
+<section class="card"><h2>Simulation controls</h2><div class="grid"><button id="pause" class="primary">Pause</button><label>Simulation speed<select id="speed"><option value="1">1x · watch</option><option value="4">4x</option><option value="12" selected>12x · train</option><option value="30">30x · fast</option></select></label></div><div class="buttons"><button id="reset">New population</button><button id="newtrack">New circuit</button></div><div class="buttons"><button id="save">Save best brain</button><button id="load">Load saved brain</button></div><label class="check"><input id="sensors" type="checkbox" checked>Show leader sensors</label><p class="hint">Save/load uses only this browser. A saved brain keeps its original circuit. Refresh starts fresh random cars. Training pauses when this tab is hidden.</p></section></div></main>
+<footer><details><summary>How the cars actually learn</summary><p>Each car reads five distances to the road edge and its own speed. A tiny neural network (6 inputs, 8 hidden units, 2 outputs) chooses steering and throttle. There is no scripted driver. Cars that crash or stop making forward progress are eliminated. Fitness rewards forward circuit distance, completed laps and faster lap times. At each generation boundary, tournament selection chooses parents, crossover mixes their weights, and mutation changes a fraction of weights. The best three brains are preserved. Performance can plateau; a new population or a higher mutation rate can explore new solutions. Lap times and generation duration use simulation time, not wall-clock time. Speed is a target, so slower phones may run below it.</p></details></footer>
+<script>
+'use strict';
+// Self-contained simulation. No hand-coded driver or pre-trained weights.
+const Race=(()=>{
+const W=1000,H=640,R=48,DT=1/60;
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function track(seed=42){
+ const rand=rng(seed),phase=rand()*Math.PI*2,pts=[];
+ for(let i=0;i<100;i++){const a=i/100*Math.PI*2,variation=1+.12*Math.sin(3*a+phase)+.06*Math.cos(2*a-phase);pts.push({x:500+365*variation*Math.cos(a),y:320+210*variation*Math.sin(a)});}
+ const segs=[];let length=0;
+ for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length],dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy);segs.push({a,b,dx,dy,len,len2:len*len,offset:length});length+=len;}
+ function nearest(x,y){let best=Infinity,out;
+  for(let i=0;i<segs.length;i++){const s=segs[i],t=clamp(((x-s.a.x)*s.dx+(y-s.a.y)*s.dy)/s.len2,0,1),px=s.a.x+t*s.dx,py=s.a.y+t*s.dy,d=(x-px)**2+(y-py)**2;if(d<best){best=d;out={distance:Math.sqrt(d),arc:s.offset+t*s.len,index:i};}}
+  return out;
+ }
+ const walls=[];for(let i=0;i<pts.length;i++){const prev=pts[(i+99)%100],next=pts[(i+1)%100],dx=next.x-prev.x,dy=next.y-prev.y,len=Math.hypot(dx,dy);walls.push([{x:pts[i].x-dy/len*R,y:pts[i].y+dx/len*R},{x:pts[i].x+dy/len*R,y:pts[i].y-dx/len*R}]);}
+ return {seed,pts,segs,length,walls,nearest,start:pts[0],angle:Math.atan2(segs[0].dy,segs[0].dx)};
+}
+const ANGLES=[-1.1,-.55,0,.55,1.1],RANGE=200,MAX=260;
+function prepareTrack(t){
+ const cell=5,nx=Math.ceil(W/cell)+1,ny=Math.ceil(H/cell)+1,field=new Float32Array(nx*ny);
+ for(let y=0;y<ny;y++)for(let x=0;x<nx;x++)field[y*nx+x]=t.nearest(x*cell,y*cell).distance;
+ t.distance=(x,y)=>{if(x<0||y<0||x>=W||y>=H)return 999;const gx=x/cell,gy=y/cell,ix=Math.floor(gx),iy=Math.floor(gy),u=gx-ix,v=gy-iy;return field[iy*nx+ix]*(1-u)*(1-v)+field[iy*nx+ix+1]*u*(1-v)+field[(iy+1)*nx+ix]*(1-u)*v+field[(iy+1)*nx+ix+1]*u*v;};return t;
+}
+class Car{
+ constructor(brain,t){this.brain=brain;this.x=t.start.x;this.y=t.start.y;this.a=t.angle;this.speed=0;this.alive=true;this.arc=0;this.travel=0;this.bestTravel=0;this.fitness=0;this.age=0;this.stall=0;this.laps=0;this.lapAt=0;this.fastLap=Infinity;this.inputs=new Float64Array(6);this.hidden=new Float64Array(8);this.outputs=new Float64Array(2);this.hits=[];}
+ sense(t){this.hits.length=0;for(let j=0;j<5;j++){const a=this.a+ANGLES[j],dx=Math.cos(a),dy=Math.sin(a);let d=8;while(d<RANGE && t.distance(this.x+dx*d,this.y+dy*d)<R-2)d+=8;this.inputs[j]=d/RANGE;this.hits.push({x:this.x+dx*d,y:this.y+dy*d});}this.inputs[5]=this.speed/MAX;}
+ move(t,steer,throttle){
+  if(!this.alive)return;this.age++;
+  this.speed=clamp(this.speed+(throttle*190-45-this.speed*.18)*DT,0,MAX);
+  this.a+=steer*2.9*clamp(this.speed/100,0,1)*DT;
+  this.x+=Math.cos(this.a)*this.speed*DT;this.y+=Math.sin(this.a)*this.speed*DT;
+  if(t.distance(this.x,this.y)>R-7){this.alive=false;return;}
+  const near=t.nearest(this.x,this.y);let delta=near.arc-this.arc;
+  if(delta>t.length/2)delta-=t.length;if(delta<-t.length/2)delta+=t.length;
+  // Disallow teleporting/shortcut credit and backward farming.
+  if(Math.abs(delta)<MAX*DT*4)this.travel+=delta;
+  this.arc=near.arc;
+  if(this.travel>this.bestTravel+2){this.bestTravel=this.travel;this.stall=0;}else this.stall++;
+  const laps=Math.floor(Math.max(0,this.travel)/t.length);
+  if(laps>this.laps){this.fastLap=Math.min(this.fastLap,(this.age-this.lapAt)*DT);this.lapAt=this.age;this.laps=laps;}
+  this.fitness=Math.max(0,this.bestTravel)+this.laps*500+(Number.isFinite(this.fastLap)?400/this.fastLap:0);
+  if(this.stall>240)this.alive=false;
+ }
+}
+const GENES=74;
+function brain(rand=Math.random){return Float64Array.from({length:GENES},()=>rand()*2-1);}
+function forward(c){const g=c.brain,h=c.hidden,o=c.outputs;
+ for(let j=0;j<8;j++){let sum=g[48+j];for(let i=0;i<6;i++)sum+=g[j*6+i]*c.inputs[i];h[j]=Math.tanh(sum);}
+ for(let k=0;k<2;k++){let sum=g[72+k];for(let j=0;j<8;j++)sum+=g[56+k*8+j]*h[j];o[k]=Math.tanh(sum);}
+ return o;
+}
+function drive(c,t){if(!c.alive)return;c.sense(t);const o=forward(c);c.move(t,o[0],(o[1]+1)/2);}
+class Evolution{
+ constructor(opts={}){this.rand=opts.rand||Math.random;this.size=opts.size||100;this.limit=opts.limit||30;this.target=opts.target||0;this.mutation=opts.mutation||.08;this.t=prepareTrack(track(opts.seed||42));this.reset();}
+ reset(saved=null){this.gen=1;this.tick=0;this.history=[];this.best=0;this.bestBrain=null;this.fastLap=Infinity;this.done=false;this.cars=Array.from({length:this.size},(_,i)=>{const b=saved?Float64Array.from(saved):brain(this.rand);if(saved&&i>0)this.mutate(b);return new Car(b,this.t);});}
+ mutate(b){for(let i=0;i<GENES;i++)if(this.rand()<this.mutation)b[i]=clamp(b[i]+(this.rand()+this.rand()+this.rand()-1.5)*.8,-6,6);return b;}
+ breed(){const sorted=[...this.cars].sort((a,b)=>b.fitness-a.fitness),pick=()=>{let best=sorted[Math.floor(this.rand()*sorted.length)];for(let k=0;k<3;k++){const c=sorted[Math.floor(this.rand()*sorted.length)];if(c.fitness>best.fitness)best=c;}return best.brain;};const genes=sorted.slice(0,Math.min(3,this.size)).map(c=>Float64Array.from(c.brain));
+ while(genes.length<this.size){const a=pick(),b=pick();genes.push(this.mutate(Float64Array.from(a,(v,i)=>this.rand()<.5?v:b[i])));}
+ this.cars=genes.map(b=>new Car(b,this.t));this.gen++;this.tick=0;
+ }
+ step(){if(this.done)return false;this.tick++;let alive=0;
+ for(const c of this.cars){drive(c,this.t);if(c.alive)alive++;if(c.fitness>this.best){this.best=c.fitness;this.bestBrain=Float64Array.from(c.brain);}this.fastLap=Math.min(this.fastLap,c.fastLap);}
+ if(!alive || this.tick>=this.limit/DT){const best=Math.max(...this.cars.map(c=>c.fitness));this.history.push(best);if(this.target && this.gen>=this.target){this.done=true;}else this.breed();return true;}return false;
+ }
+}
+return {W,H,R,DT,clamp,rng,track,prepareTrack,Car,ANGLES,RANGE,MAX,GENES,brain,forward,drive,Evolution};
+})();
+if(typeof module!=='undefined')module.exports=Race;
+
+</script><script>
+'use strict';
+const $=id=>document.getElementById(id),cv=$('world'),cx=cv.getContext('2d'),ch=$('chart'),cc=ch.getContext('2d');
+let evo=new Race.Evolution(),running=true,speed=12,accum=0,last=0,noticeTimer=0;
+function notify(text){$('notice').textContent=text;$('notice').style.display='block';clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>$('notice').style.display='none',8000);}
+function bounds(id,min,max,fallback){let n=Math.round(Number($(id).value));if(!Number.isFinite(n))n=fallback;n=Race.clamp(n,min,max);$(id).value=n;return n;}
+function options(){return {size:bounds('population',10,300,100),target:bounds('target',0,10000,0),mutation:bounds('mutation',1,40,8)/100,limit:bounds('duration',5,120,30),seed:evo.t.seed};}
+function fresh(seed=evo.t.seed){const o=options();o.seed=seed;evo=new Race.Evolution(o);running=true;accum=0;$('pause').textContent='Pause';drawChart();}
+$('apply').onclick=()=>{fresh();notify('Settings applied. Starting a fresh population.');};
+$('reset').onclick=()=>{fresh();notify('Fresh random brains on the same circuit.');};
+$('newtrack').onclick=()=>{fresh(Math.floor(Math.random()*1000000)+1);notify('New circuit and random population.');};
+$('pause').onclick=()=>{if(evo.done){evo.target=0;$('target').value=0;evo.done=false;evo.breed();notify('Generation target removed. Training continues.');}running=!running;$('pause').textContent=running?'Pause':'Resume';};
+$('speed').onchange=()=>speed=Number($('speed').value);
+$('save').onclick=()=>{if(!evo.bestBrain)return notify('Let the cars make progress first.');try{localStorage.setItem('race-lab-brain-v2',JSON.stringify({brain:[...evo.bestBrain],seed:evo.t.seed,fitness:evo.best}));notify('Best brain and its circuit saved in this browser.');}catch{notify('This browser cannot save locally.');}};
+$('load').onclick=()=>{try{const d=JSON.parse(localStorage.getItem('race-lab-brain-v2'));if(!d||!Array.isArray(d.brain)||d.brain.length!==74||!d.brain.every(Number.isFinite)||!Number.isInteger(d.seed))throw Error();fresh(d.seed);evo.reset(d.brain);notify('Saved brain and original circuit loaded, with mutated offspring.');}catch{notify('No valid saved brain in this browser. Save a trained brain first.');}};
+function fit(){for(const [c,h] of [[cv,cv.clientWidth*640/1000],[ch,90]]){const d=Math.min(devicePixelRatio||1,2);c.width=Math.round(c.clientWidth*d);c.height=Math.round(h*d);}drawChart();}
+function path(points){cx.beginPath();points.forEach((p,i)=>i?cx.lineTo(p.x,p.y):cx.moveTo(p.x,p.y));cx.closePath();}
+function drawCar(c,color){cx.save();cx.translate(c.x,c.y);cx.rotate(c.a);cx.fillStyle=color;cx.fillRect(-9,-5,18,10);cx.fillStyle='#152235';cx.fillRect(1,-4,4,8);cx.restore();}
+function render(){cx.setTransform(cv.width/1000,0,0,cv.height/640,0,0);cx.clearRect(0,0,1000,640);const t=evo.t;
+ cx.lineJoin='round';cx.lineCap='round';path(t.pts);cx.strokeStyle='#68798b';cx.lineWidth=Race.R*2+4;cx.stroke();path(t.pts);cx.strokeStyle='#283849';cx.lineWidth=Race.R*2;cx.stroke();path(t.pts);cx.setLineDash([10,17]);cx.strokeStyle='#a3b8c633';cx.lineWidth=2;cx.stroke();cx.setLineDash([]);
+ const p=t.start,a=t.angle;cx.save();cx.translate(p.x,p.y);cx.rotate(a);for(let i=0;i<12;i++){cx.fillStyle=i%2?'#182431':'#eaf5ff';cx.fillRect(-5,-Race.R+i*8,10,8);}cx.restore();
+ const live=evo.cars.filter(c=>c.alive),leader=live.reduce((b,c)=>!b||c.fitness>b.fitness?c:b,null);
+ for(const c of live)if(c!==leader)drawCar(c,'#65d7ff66');
+ if(leader){if($('sensors').checked){cx.strokeStyle='#65d7ff77';cx.lineWidth=1;for(const p of leader.hits){cx.beginPath();cx.moveTo(leader.x,leader.y);cx.lineTo(p.x,p.y);cx.stroke();}}drawCar(leader,'#ffd36b');}
+ $('generation').textContent=evo.gen;$('alive').textContent=live.length+'/'+evo.size;$('record').textContent=Math.round(evo.best).toLocaleString();$('lap').textContent=Number.isFinite(evo.fastLap)?evo.fastLap.toFixed(2)+'s':'--';$('clock').textContent=(evo.tick/60).toFixed(1)+' / '+evo.limit+' simulated seconds · '+(evo.done?'Target reached':running?'Training':'Paused');
+}
+function drawChart(){const w=ch.width,h=ch.height;cc.clearRect(0,0,w,h);const data=evo.history;if(!data.length){$('chartText').textContent='Random brains, no completed generations yet.';return;}const max=Math.max(1,...data);cc.beginPath();data.forEach((v,i)=>{const x=6+i/Math.max(1,data.length-1)*(w-12),y=h-6-v/max*(h-12);i?cc.lineTo(x,y):cc.moveTo(x,y);});cc.strokeStyle='#65d7ff';cc.lineWidth=3;cc.stroke();$('chartText').textContent='Completed '+data.length+' · first '+Math.round(data[0])+' → latest '+Math.round(data[data.length-1]);}
+function frame(now){requestAnimationFrame(frame);const elapsed=last?Math.min(.1,(now-last)/1000):0;last=now;if(running&&!document.hidden){accum+=elapsed*60*speed;const start=performance.now();let count=0;while(accum>=1&&count++<120){const changed=evo.step();accum--;if(changed)drawChart();if(evo.done){running=false;$('pause').textContent='Continue';notify('Completed exactly '+evo.target+' generations. Best fitness '+Math.round(evo.best)+'.');break;}if(performance.now()-start>12){accum=Math.min(accum,120);break;}}}render();}
+document.addEventListener('visibilitychange',()=>{last=0;accum=0;});window.addEventListener('resize',fit);fit();requestAnimationFrame(frame);
+</script></body></html>
